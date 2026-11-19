@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NBA Career Mode</title>
+<style>
+:root{
+--bg:#090f1e;--panel:#141f35;--panel2:#1d2c48;
+--text:#f4f7ff;--muted:#9eacc5;--gold:#ffc451;
+--blue:#58a6ff;--green:#50d6a0;--red:#ff7474;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}
+header{background:#101b30;padding:20px;border-bottom:1px solid #ffffff20}
+header h1{margin:0;font-size:27px}
+header small{color:var(--muted)}
+main{max-width:1150px;margin:22px auto;padding:0 14px 60px}
+.panel{background:var(--panel);border:1px solid #ffffff15;border-radius:14px;padding:18px;margin-bottom:15px}
+h2{font-size:20px;margin:0 0 15px}
+h3{margin:0 0 10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:9px}
+.tile{background:var(--panel2);padding:12px;border-radius:10px}
+.tile b{display:block;font-size:23px}
+.tile small{color:var(--muted)}
+label{display:block;color:var(--muted);font-size:13px;margin:9px 0 5px}
+input,select{width:100%;padding:12px;background:#0b1528;color:white;border:1px solid #ffffff25;border-radius:8px;font-size:15px}
+button{padding:11px 15px;border:0;border-radius:8px;background:var(--blue);color:#071326;font-weight:bold;cursor:pointer;margin:4px}
+button:hover{filter:brightness(1.12)}
+button:disabled{opacity:.35;cursor:not-allowed}
+.gold{background:var(--gold)}
+.green{background:var(--green)}
+.dark{background:#334763;color:white}
+.red{background:var(--red)}
+.muted{color:var(--muted)}
+.pill{background:#263957;padding:4px 9px;border-radius:20px;font-size:12px;display:inline-block;margin:3px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.hidden{display:none!important}
+.bar{height:8px;background:#2a3952;border-radius:10px;overflow:hidden;margin-top:5px}
+.bar span{display:block;height:100%;background:linear-gradient(90deg,#4799ff,#50d6a0)}
+.game{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--panel2);padding:12px;border-radius:9px;margin:7px 0}
+.game small{display:block;color:var(--muted)}
+.score{font-size:17px;color:var(--gold);font-weight:bold}
+.notice{padding:12px;background:#ffc45112;border-left:4px solid var(--gold);border-radius:7px;margin:12px 0}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:center;padding:9px 5px;border-bottom:1px solid #ffffff15}
+th{color:var(--muted)}
+td:first-child,th:first-child{text-align:left}
+.scroll{overflow-x:auto}
+.tabbar{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:15px}
+.tabbar button{background:#263957;color:white}
+.tabbar button.active{background:var(--gold);color:#101827}
+.section{display:none}
+.section.active{display:block}
+.modal{position:fixed;inset:0;background:#000c;z-index:10;overflow:auto;padding:15px}
+.modalbox{max-width:750px;margin:4vh auto;background:var(--panel);padding:20px;border-radius:14px}
+footer{text-align:center;color:var(--muted);padding:25px;font-size:12px}
+@media(max-width:600px){
+header h1{font-size:23px}
+.panel{padding:13px}
+.game{align-items:flex-start}
+}
+</style>
+</head>
+<body>
+
+<header>
+<h1>🏀 NBA CAREER MODE</h1>
+<small>Construa sua carreira. Conquiste o mundo. Domine a NBA.</small>
+</header>
+
+<main>
+
+<section id="creation" class="panel">
+<h2>Criação de jogador</h2>
+<div class="grid">
+<div>
+<label>Nome</label>
+<input id="name" maxlength="25" value="Meu Jogador">
+</div>
+<div>
+<label>Nacionalidade</label>
+<select id="country"></select>
+</div>
+<div>
+<label>Posição</label>
+<select id="position">
+<option value="PG">Armador (PG)</option>
+<option value="SG">Ala-armador (SG)</option>
+<option value="SF" selected>Ala (SF)</option>
+<option value="PF">Ala-pivô (PF)</option>
+<option value="C">Pivô (C)</option>
+</select>
+</div>
+<div>
+<label>Estilo de jogador</label>
+<select id="style">
+<option value="balanced">Completo</option>
+<option value="scorer">Pontuador</option>
+<option value="shooter">Arremessador</option>
+<option value="playmaker">Armador</option>
+<option value="defender">Defensor</option>
+<option value="rebounder">Reboteiro</option>
+</select>
+</div>
+</div>
+<div class="notice">
+Você começa aos 17 anos na seleção do seu país. Depois de 1 a 4 temporadas, poderá declarar-se elegível ao Draft da NBA.
+</div>
+<button class="gold" onclick="newCareer()">COMEÇAR CARREIRA</button>
+<button class="dark" onclick="loadSaved()">CARREGAR CARREIRA</button>
+</section>
+
+<section id="game" class="hidden">
+
+<div class="panel">
+<div class="row">
+<div>
+<h2 id="playerName"></h2>
+<span id="playerInfo" class="muted"></span>
+</div>
+<div>
+<span class="pill" id="team"></span>
+<span class="pill" id="league"></span>
+</div>
+</div>
+<div class="stats" id="overview"></div>
+</div>
+
+<div class="tabbar">
+<button class="active" onclick="tab('home',this)">Carreira</button>
+<button onclick="tab('games',this)">Jogos</button>
+<button onclick="tab('attributes',this)">Atributos</button>
+<button onclick="tab('standings',this)">Classificação</button>
+<button onclick="tab('awards',this)">Prêmios</button>
+<button onclick="tab('history',this)">Histórico</button>
+</div>
+
+<div id="home" class="section active">
+<div class="grid">
+<div class="panel">
+<h2>Temporada atual</h2>
+<div id="seasonInfo"></div>
+<div id="actions"></div>
+</div>
+<div class="panel">
+<h2>Estatísticas da temporada</h2>
+<div class="stats" id="seasonStats"></div>
+</div>
+</div>
+</div>
+
+<div id="games" class="section">
+<div class="panel">
+<h2>Calendário de jogos</h2>
+<div class="row">
+<span class="muted" id="scheduleInfo"></span>
+<button class="dark" onclick="simulateAll()">Simular todos os jogos restantes</button>
+</div>
+<div id="gameList"></div>
+</div>
+</div>
+
+<div id="attributes" class="section">
+<div class="panel">
+<h2>Atributos do jogador</h2>
+<div id="attributeList"></div>
+<div class="notice" id="trainingPoints"></div>
+<button class="gold" onclick="training()">ABRIR TREINAMENTO</button>
+</div>
+</div>
+
+<div id="standings" class="section">
+<div class="panel">
+<h2>Classificação da liga</h2>
+<div id="standingsList"></div>
+</div>
+</div>
+
+<div id="awards" class="section">
+<div class="panel">
+<h2>Premiações individuais</h2>
+<div id="awardsList"></div>
+</div>
+</div>
+
+<div id="history" class="section">
+<div class="panel">
+<h2>Histórico da carreira</h2>
+<div id="historyList"></div>
+</div>
+</div>
+
+</section>
+</main>
+
+<div id="modal" class="modal hidden">
+<div class="modalbox">
+<div class="row">
+<h2 id="modalTitle">Detalhes</h2>
+<button class="dark" onclick="closeModal()">FECHAR</button>
+</div>
+<div id="modalContent"></div>
+</div>
+</div>
+
+<footer>NBA Career Mode • Simulador de basquete</footer>
+
+<script>
+
+// ============================================
+// CONFIGURAÇÕES E FRANQUIAS
+// ============================================
+
+const EAST=[
+"Toronto Raptors","Charlotte Hornets","Philadelphia 76ers",
+"Boston Celtics","New York Knicks","Brooklyn Nets",
+"Miami Heat","Orlando Magic","Chicago Bulls","Indiana Pacers",
+"Milwaukee Bucks","Cleveland Cavaliers","Detroit Pistons",
+"Washington Wizards","Atlanta Hawks"
+];
+
+const WEST=[
+"San Antonio Spurs","Memphis Grizzlies","Dallas Mavericks",
+"Los Angeles Clippers","Los Angeles Lakers","New Orleans Pelicans",
+"Houston Rockets","Minnesota Timberwolves","Sacramento Kings",
+"Golden State Warriors","Phoenix Suns","Utah Jazz",
+"Denver Nuggets","Portland Trail Blazers","Oklahoma City Thunder"
+];
+
+const TEAMS=[...EAST,...WEST];
+
+const COUNTRIES=[
+"Brasil","Estados Unidos","Canadá","Argentina","França",
+"Espanha","Alemanha","Sérvia","Austrália","Nigéria",
+"Japão","China","Grécia","Eslovênia","Porto Rico",
+"República Dominicana","Lituânia","Itália","Turquia",
+"Senegal","Camarões","México","Venezuela","Bahamas",
+"Letônia","Geórgia","Filipinas","Coreia do Sul",
+"Reino Unido","Angola","Croácia","Montenegro"
+];
+
+const ATTRS=[
+["Arremesso","shoot"],
+["Arremesso de 3","three"],
+["Finalização","finish"],
+["Passe","pass"],
+["Drible","handle"],
+["Defesa","defense"],
+["Rebotes","rebound"],
+["Tocos","block"],
+["Roubos","steal"],
+["Velocidade","speed"],
+["Físico","physical"]
+];
+
+const $=id=>document.getElementById(id);
+const random=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const choice=a=>a[Math.floor(Math.random()*a.length)];
+const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0;
+
+let player=null;
+
+// ============================================
+// CRIAÇÃO DO JOGADOR
+// ============================================
+
+COUNTRIES.forEach(c=>{
+let o=document.createElement("option");
+o.value=c;
+o.textContent=c;
+$("country").appendChild(o);
+});
+
+$("country").value="Brasil";
+
+function newCareer(){
+
+const attrs={
+shoot:48,three:48,finish:48,pass:48,
+handle:48,defense:48,rebound:48,
+block:48,steal:48,speed:48,physical:48
+};
+
+const bonuses={
+balanced:{},
+scorer:{shoot:12,finish:7},
+shooter:{three:15,shoot:9},
+playmaker:{pass:13,handle:8},
+defender:{defense:14,steal:7,block:5},
+rebounder:{rebound:14,block:7,physical:6}
+};
+
+Object.entries(bonuses[$("style").value]).forEach(([k,v])=>{
+attrs[k]+=v;
+});
+
+player={
+name:$("name").value.trim()||"Meu Jogador",
+country:$("country").value,
+pos:$("position").value,
+age:17,
+attrs,
+points:5,
+
+stage:"national",
+league:"Seleção nacional",
+team:"Seleção "+$("country").value,
+
+nationalYears:0,
+proYears:0,
+seasonNumber:0,
+
+seasonType:"continental",
+games:[],
+standings:[],
+playoff:null,
+
+seasonStats:{gp:0,pts:0,reb:0,ast:0,stl:0,blk:0,tov:0,min:0},
+careerStats:{gp:0,pts:0,reb:0,ast:0,stl:0,blk:0},
+
+lastPPG:0,
+history:[],
+awards:[],
+championships:0,
+mvp:0,
+allStar:0
+};
+
+$("creation").classList.add("hidden");
+$("game").classList.remove("hidden");
+
+startNationalSeason();
+render();
+save();
+}
+
+// ============================================
+// TEMPORADAS INTERNACIONAIS
+// ============================================
+
+function continent(country){
+
+const americas=[
+"Brasil","Estados Unidos","Canadá","Argentina","Porto Rico",
+"República Dominicana","México","Venezuela","Bahamas"
+];
+
+const africa=["Nigéria","Senegal","Camarões","Angola"];
+
+const asia=[
+"Japão","China","Filipinas","Coreia do Sul","Austrália"
+];
+
+if(americas.includes(country))return "Américas";
+if(africa.includes(country))return "África";
+if(asia.includes(country))return "Ásia/Oceania";
+return "Europa";
+}
+
+function startNationalSeason(){
+
+player.seasonNumber++;
+player.seasonType="continental";
+player.games=[];
+
+let cont=continent(player.country);
+
+let opponents=COUNTRIES.filter(c=>
+c!==player.country&&continent(c)===cont
+);
+
+for(let i=0;i<6;i++){
+player.games.push(createGame(
+"Campeonato Continental: "+choice(opponents),
+"continental"
+));
+}
+
+// Copa do Mundo a cada duas temporadas nacionais.
+if(player.nationalYears%2===0){
+for(let i=0;i<5;i++){
+player.games.push(createGame(
+"Copa do Mundo: "+choice(COUNTRIES.filter(c=>c!==player.country)),
+"world"
+));
+}
+}
+
+player.seasonStats=emptyStats();
+player.seasonTitle="Temporada "+(player.nationalYears+1)+" • Seleção";
+}
+
+function emptyStats(){
+return {gp:0,pts:0,reb:0,ast:0,stl:0,blk:0,tov:0,min:0};
+}
+
+// ============================================
+// SISTEMA DE PARTIDAS
+// ============================================
+
+function createGame(opponent,type){
+return {
+opponent,type,
+played:false,
+stats:null,
+teamScore:null,
+oppScore:null,
+win:null
+};
+}
+
+function simulatePlayerStats(){
+
+let a=player.attrs;
+let min=player.stage==="national"?random(20,32):random(15,38);
+
+let positionBonus={
+PG:{ast:2,reb:0,blk:0},
+SG:{ast:1,reb:0,blk:0},
+SF:{ast:0,reb:1,blk:0},
+PF:{ast:0,reb:2,blk:1},
+C:{ast:0,reb:3,blk:2}
+}[player.pos];
+
+let pts=Math.max(0,Math.round(
+(min/30)*(7+(a.shoot-40)*.22+
+(a.finish-40)*.18+(a.three-40)*.10)+random(-5,7)
+));
+
+let reb=Math.max(0,Math.round(
+(min/30)*(2+(a.rebound-40)*.14+
+positionBonus.reb)+random(-1,3)
+));
+
+let ast=Math.max(0,Math.round(
+(min/30)*(1+(a.pass-40)*.13+
+positionBonus.ast)+random(-1,3)
+));
+
+let stl=Math.max(0,Math.round(
+(min/30)*(.4+(a.steal-40)*.035+random(0,2))
+));
+
+let blk=Math.max(0,Math.round(
+(min/30)*(.3+(a.block-40)*.04+
+positionBonus.blk+random(0,1))
+));
+
+let tov=Math.max(0,Math.round(
+(min/30)*(1+(50-a.handle)*.025+random(0,2))
+));
+
+let fgm=Math.max(0,Math.round(pts*.43/2));
+let fga=fgm+random(3,9);
+let three=Math.min(fgm,random(0,4));
+let ftm=Math.max(0,Math.round(pts-fgm*2-three));
+
+return {min,pts,reb,ast,stl,blk,tov,fgm,fga,three,ftm};
+}
+
+function simulateGame(g){
+
+if(g.played)return;
+
+let stats=simulatePlayerStats();
+
+let ovr=overall();
+
+let teamScore=random(88,120)+Math.round((ovr-60)*.35);
+let oppScore=random(88,120);
+
+g.played=true;
+g.stats=stats;
+g.teamScore=teamScore;
+g.oppScore=oppScore;
+g.win=teamScore>oppScore;
+
+player.seasonStats.gp++;
+
+["pts","reb","ast","stl","blk","tov","min"].forEach(k=>{
+player.seasonStats[k]+=stats[k];
+player.careerStats[k]=(player.careerStats[k]||0)+stats[k];
+});
+
+player.careerStats.gp++;
+
+save();
+}
+
+function playGame(i){
+
+let g=player.games[i];
+
+if(g.played)return;
+
+simulateGame(g);
+render();
+showGame(g);
+}
+
+function simulateAll(){
+
+player.games.forEach(g=>{
+if(!g.played)simulateGame(g);
+});
+
+render();
+save();
+}
+
+function showGame(g){
+
+$("modalTitle").textContent=g.opponent;
+
+$("modalContent").innerHTML=`
+<div class="notice">
+${g.win?"VITÓRIA":"DERROTA"} •
+<strong>${g.teamScore} x ${g.oppScore}</strong>
+</div>
+
+<div class="stats">
+${Object.entries({
+MIN:g.stats.min,
+PTS:g.stats.pts,
+REB:g.stats.reb,
+AST:g.stats.ast,
+STL:g.stats.stl,
+BLK:g.stats.blk,
+TO:g.stats.tov,
+FG:g.stats.fgm+"/"+g.stats.fga,
+"3PT":g.stats.three,
+FT:g.stats.ftm
+}).map(([k,v])=>`
+<div class="tile"><b>${v}</b><small>${k}</small></div>
+`).join("")}
+</div>
+`;
+
+$("modal").classList.remove("hidden");
+}
+
+function closeModal(){
+$("modal").classList.add("hidden");
+}
+
+// ============================================
+// OVERALL E TREINAMENTO
+// ============================================
+
+function overall(){
+return Math.round(avg(Object.values(player.attrs)));
+}
+
+function training(){
+
+$("modalTitle").textContent="Treinamento";
+
+$("modalContent").innerHTML=`
+<div class="notice">
+Pontos disponíveis: <strong>${player.points}</strong>
+</div>
+
+${ATTRS.map(([name,key])=>`
+<div class="row" style="margin:12px 0">
+<div>${name}: <strong>${player.attrs[key]}</strong></div>
+<button ${player.points<=0||player.attrs[key]>=99?"disabled":""}
+onclick="upgrade('${key}')">+1</button>
+</div>
+`).join("")}
+`;
+
+$("modal").classList.remove("hidden");
+}
+
+function upgrade(key){
+
+if(player.points<=0||player.attrs[key]>=99)return;
+
+player.attrs[key]++;
+player.points--;
+
+save();
+render();
+training();
+}
+
+// ============================================
+// SISTEMA DE DRAFT
+// ============================================
+
+function declareDraft(){
+
+if(player.stage!=="national"||player.nationalYears<1)return;
+
+player.stage="draft";
+player.age++;
+
+let ovr=overall();
+let team=choice(TEAMS);
+
+player.history.push(
+`Draft: ${player.name} foi selecionado pelo ${team} aos ${player.age} anos.`
+);
+
+player.draftedTeam=team;
+
+if(ovr<68){
+player.league="G League";
+player.team=team+" • G League";
+player.history.push("Começou sua carreira profissional na G League.");
+}else{
+player.league="NBA";
+player.team=team;
+player.history.push("Foi direto para a NBA!");
+}
+
+player.proYears=0;
+
+startProSeason();
+render();
+save();
+}
+
+// ============================================
+// TEMPORADAS PROFISSIONAIS
+// ============================================
+
+function startProSeason(){
+
+player.seasonNumber++;
+player.proYears++;
+
+player.seasonStats=emptyStats();
+player.games=[];
+player.seasonType="regular";
+
+let teams=TEAMS.filter(t=>t!==player.draftedTeam);
+
+let count=player.league==="NBA"?82:50;
+
+for(let i=0;i<count;i++){
+
+player.games.push(createGame(
+choice(teams),
+"regular"
+));
+
+}
+
+player.seasonTitle=player.league+
+" • Temporada "+player.proYears;
+
+}
+
+// ============================================
+// ESTATÍSTICAS E MÉDIAS
+// ============================================
+
+function averages(){
+
+let s=player.seasonStats;
+let gp=s.gp||1;
+
+return {
+ppg:s.pts/gp,
+rpg:s.reb/gp,
+apg:s.ast/gp,
+spg:s.stl/gp,
+bpg:s.blk/gp,
+topg:s.tov/gp
+};
+}
+
+// ============================================
+// CLASSIFICAÇÃO E PLAYOFFS
+// ============================================
+
+function createStandings(){
+
+let standings=[];
+
+TEAMS.forEach(team=>{
+
+let isUser=team===player.draftedTeam;
+
+let wins=random(25,58);
+let losses=82-wins;
+
+standings.push({
+team,wins,losses,
+conference:EAST.includes(team)?"Leste":"Oeste",
+isUser
+});
+
+});
+
+standings.sort((a,b)=>b.wins-a.wins);
+
+player.standings=standings;
+}
+
+function standingsHTML(){
+
+if(!player.standings.length){
+return "<p class='muted'>A classificação será definida no final da temporada regular.</p>";
+}
+
+let html="";
+
+["Leste","Oeste"].forEach(conf=>{
+
+let list=player.standings.filter(t=>t.conference===conf)
+.sort((a,b)=>b.wins-a.wins);
+
+html+=`<h3>${conf}</h3><div class="scroll"><table>
+<tr><th>Equipe</th><th>V</th><th>D</th></tr>`;
+
+list.forEach((t,i)=>{
+html+=`<tr style="${t.isUser?'color:#ffc451;font-weight:bold':''}">
+<td>${i+1}. ${t.team}</td>
+<td>${t.wins}</td><td>${t.losses}</td>
+</tr>`;
+});
+
+html+="</table></div>";
+});
+
+return html;
+}
+
+function playoffStart(){
+
+createStandings();
+
+let conference=EAST.includes(player.draftedTeam)?"Leste":"Oeste";
+
+let list=player.standings.filter(t=>t.conference===conference)
+.sort((a,b)=>b.wins-a.wins);
+
+let rank=list.findIndex(t=>t.isUser);
+
+player.playoff={
+round:1,
+opponent:list[rank===-1?7:(rank<8?Math.min(rank===0?7:0,7):7)].team,
+userWins:0,
+oppWins:0,
+games:[]
+};
+
+player.stage="playoffs";
+player.seasonType="playoffs";
+
+player.history.push(
+"Classificação para os playoffs: "+(rank+1)+"º lugar na conferência."
+);
+
+startPlayoffRound();
+}
+
+function startPlayoffRound(){
+
+let p=player.playoff;
+p.userWins=0;
+p.oppWins=0;
+p.games=[];
+
+for(let i=0;i<7;i++){
+p.games.push(createGame(p.opponent,"playoff"));
+}
+}
+
+function playPlayoffGame(i){
+
+let g=player.playoff.games[i];
+
+if(g.played)return;
+
+simulateGame(g);
+
+if(g.win)player.playoff.userWins++;
+else player.playoff.oppWins++;
+
+render();
+
+if(player.playoff.userWins===4||player.playoff.oppWins===4){
+finishPlayoffRound();
+}
+}
+
+function finishPlayoffRound(){
+
+let p=player.playoff;
+
+if(p.userWins===4){
+
+if(p.round===4){
+
+player.championships++;
+player.history.push("🏆 CAMPEÃO DA NBA!");
+
+player.playoff=null;
+player.stage="nba";
+finishProSeason(true);
+return;
+
+}
+
+p.round++;
+
+p.opponent=choice(TEAMS.filter(t=>t!==player.draftedTeam));
+startPlayoffRound();
+
+}else{
+
+player.history.push("Eliminado nos playoffs na rodada "+p.round+".");
+player.playoff=null;
+player.stage="nba";
+finishProSeason(false);
+return;
+
+}
+
+render();
+save();
+}
+
+// ============================================
+// ENCERRAMENTO DE TEMPORADA
+// ============================================
+
+function finishNationalSeason(){
+
+let a=averages();
+
+player.nationalYears++;
+player.points+=5;
+player.age++;
+
+player.history.push(
+`Seleção: temporada ${player.nationalYears}. ${a.ppg.toFixed(1)} PPG, ${a.rpg.toFixed(1)} RPG e ${a.apg.toFixed(1)} APG.`
+);
+
+if(player.nationalYears>=4){
+declareDraft();
+return;
+}
+
+startNationalSeason();
+render();
+save();
+}
+
+function finishProSeason(champion){
+
+let a=averages();
+
+player.points+=7;
+player.age++;
+
+let items=[];
+
+// Premiações individuais
+let mvp=a.ppg>=23&&overall()>=78;
+let roty=player.proYears===1&&a.ppg>=14;
+let dpoy=(a.rpg+a.bpg+a.spg)>=8;
+let mip=a.ppg-player.lastPPG>=4;
+let positionAward=a.ppg>=17;
+
+if(mvp){
+items.push("🏆 MVP");
+player.mvp++;
+}else items.push("MVP: outro jogador");
+
+if(roty)items.push("🏆 ROTY");
+else items.push("ROTY: outro jogador");
+
+if(dpoy)items.push("🏆 DPOY");
+else items.push("DPOY: outro jogador");
+
+if(mip)items.push("🏆 MIPOY");
+else items.push("MIPOY: outro jogador");
+
+if(positionAward)items.push("🏆 Melhor "+player.pos);
+else items.push("Melhor "+player.pos+": outro jogador");
+
+if(champion)items.push("🏆 Campeão NBA");
+
+player.awards.push({
+season:player.proYears,
+league:player.league,
+items
+});
+
+player.history.push(
+`${player.league} ${player.proYears}: ${a.ppg.toFixed(1)} PPG, ${a.rpg.toFixed(1)} RPG, ${a.apg.toFixed(1)} APG.`
+);
+
+player.lastPPG=a.ppg;
+
+if(player.league==="G League"){
+player.league="NBA";
+player.team=player.draftedTeam;
+player.history.push("PROMOVIDO! Assinou com o elenco principal da NBA.");
+}
+
+startProSeason();
+player.stage="nba";
+
+render();
+save();
+}
+
+function advanceSeason(){
+
+if(!player.games.every(g=>g.played))return;
+
+if(player.stage==="national"){
+finishNationalSeason();
+return;
+}
+
+if(player.stage==="nba"){
+
+if(player.league==="G League"){
+finishProSeason(false);
+return;
+}
+
+playoffStart();
+render();
+return;
+}
+
+}
+
+// ============================================
+// INTERFACE
+// ============================================
+
+function tab(id,btn){
+
+document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+document.querySelectorAll(".tabbar button").forEach(b=>b.classList.remove("active"));
+
+$(id).classList.add("active");
+btn.classList.add("active");
+}
+
+function render(){
+
+if(!player)return;
+
+$("playerName").textContent=player.name;
+
+$("playerInfo").textContent=
+`${player.age} anos • ${player.country} • ${player.pos} • OVR ${overall()}`;
+
+$("team").textContent=player.team;
+$("league").textContent=player.league;
+
+$("overview").innerHTML=[
+["OVR",overall()],
+["IDADE",player.age],
+["PONTOS",player.points],
+["TEMPORADAS",player.seasonNumber],
+["JOGOS",player.careerStats.gp],
+["TÍTULOS",player.championships]
+].map(([k,v])=>`
+<div class="tile"><b>${v}</b><small>${k}</small></div>
+`).join("");
+
+$("seasonInfo").innerHTML=`
+<h3>${player.seasonTitle}</h3>
+<p class="muted">${player.stage==="national"?
+`Temporada ${player.nationalYears+1} da seleção. Você pode declarar-se elegível ao Draft após a primeira temporada.`:
+player.stage==="playoffs"?"Playoffs da NBA":
+"Temporada profissional."}</p>
+<p>Jogos concluídos: ${player.games.filter(g=>g.played).length}/${player.games.length}</p>
+`;
+
+$("actions").innerHTML=`
+${player.stage==="national"?`
+<p class="notice">${player.nationalYears}/4 temporadas na seleção.</p>
+<button class="gold" onclick="advanceSeason()" ${player.games.every(g=>g.played)?"":"disabled"}>
+ENCERRAR TEMPORADA
+</button>
+<button class="dark" onclick="declareDraft()" ${player.nationalYears<1?"disabled":""}>
+DECLARAR ELEGIBILIDADE AO DRAFT
+</button>
+`:player.stage==="nba"||player.stage==="g league"?`
+<button class="gold" onclick="advanceSeason()" ${player.games.every(g=>g.played)?"":"disabled"}>
+${player.league==="NBA"?"AVANÇAR PARA OS PLAYOFFS":"ENCERRAR TEMPORADA"}
+</button>
+`:`
+<p>Playoffs • Rodada ${player.playoff?.round||1}</p>
+<p>Vitórias: ${player.playoff?.userWins||0} - ${player.playoff?.oppWins||0}</p>
+`}`;
+
+let a=averages();
+
+$("seasonStats").innerHTML=[
+["PPG",a.ppg.toFixed(1)],
+["RPG",a.rpg.toFixed(1)],
+["APG",a.apg.toFixed(1)],
+["SPG",a.spg.toFixed(1)],
+["BPG",a.bpg.toFixed(1)]
+].map(([k,v])=>`
+<div class="tile"><b>${v}</b><small>${k}</small></div>
+`).join("");
+
+renderAttributes();
+renderGames();
+renderAwards();
+renderHistory();
+
+$("standingsList").innerHTML=standingsHTML();
+}
+
+function renderAttributes(){
+
+$("attributeList").innerHTML=ATTRS.map(([name,key])=>`
+<div style="margin:12px 0">
+<div class="row"><span>${name}</span><b>${player.attrs[key]}</b></div>
+<div class="bar"><span style="width:${player.attrs[key]}%"></span></div>
+</div>
+`).join("");
+
+$("trainingPoints").textContent=
+"Você tem "+player.points+" pontos para distribuir. Cada melhoria custa 1 ponto.";
+}
+
+function renderGames(){
+
+$("scheduleInfo").textContent=
+player.games.filter(g=>g.played).length+" de "+player.games.length+" partidas concluídas.";
+
+$("gameList").innerHTML=player.games.map((g,i)=>`
+<div class="game">
+<div>
+<strong>${g.opponent}</strong>
+<small>${g.type==="world"?"Copa do Mundo":
+g.type==="continental"?"Campeonato continental":
+g.type==="playoff"?"Playoffs":"Temporada regular"}</small>
+</div>
+<div>
+${g.played?`
+<span class="score">${g.teamScore} x ${g.oppScore}</span>
+<button class="dark" onclick="showGame(player.games[${i}])">ESTATÍSTICAS</button>
+`:`<button onclick="playGame(${i})">JOGAR</button>`}
+</div>
+</div>
+`).join("");
+}
+
+function renderAwards(){
+
+$("awardsList").innerHTML=player.awards.length?
+player.awards.slice().reverse().map(a=>`
+<div class="tile" style="margin:8px 0">
+<h3>Temporada ${a.season} • ${a.league}</h3>
+${a.items.map(x=>`<span class="pill">${x}</span>`).join("")}
+</div>
+`).join(""):
+"<p class='muted'>Nenhum prêmio conquistado ainda.</p>";
+}
+
+function renderHistory(){
+
+$("historyList").innerHTML=player.history.length?
+player.history.slice().reverse().map(x=>`
+<div class="tile" style="margin:7px 0">${x}</div>
+`).join(""):
+"<p class='muted'>Sua história começa agora.</p>";
+}
+
+// ============================================
+// SALVAMENTO
+// ============================================
+
+function save(){
+
+if(player){
+localStorage.setItem("NBA_CAREER_FINAL",JSON.stringify(player));
+}
+}
+
+function loadSaved(){
+
+let data=localStorage.getItem("NBA_CAREER_FINAL");
+
+if(!data){
+alert("Nenhuma carreira salva encontrada.");
+return;
+}
+
+try{
+player=JSON.parse(data);
+
+$("creation").classList.add("hidden");
+$("game").classList.remove("hidden");
+
+render();
+}catch(e){
+alert("Erro ao carregar carreira.");
+}
+}
+
+setInterval(save,2000);
+
+</script>
+</body>
+</html>
